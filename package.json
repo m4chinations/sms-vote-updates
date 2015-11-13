@@ -1,0 +1,17 @@
+{
+  "name": "legislator-tracker-sms",
+  "version": "1.0.0",
+  "description": "a service that sends sms updates of legislator actions",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "legislator"
+  ],
+  "author": "Tennyson Holloway",
+  "license": "MIT",
+  "dependencies": {
+    "twilio": "^2.5.2"
+  }
+}
