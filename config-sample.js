@@ -15,6 +15,7 @@ config.maria.db   = 'db';
 config.twilio.account_sid = '';
 config.twilio.auth_token = '';
 config.twilio.number = '+14808675309';
+config.twilio.endpoint = 'https://';
 
 config.sunlight.api_key = '';
 
