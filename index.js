@@ -53,9 +53,8 @@ var lastVote = moment().subtract(10, 'days');
 
 app.post('/sms', function(req, res) {
     if(twilio.validateRequest(config.twilio.auth_token, req.headers['x-twilio-signature'], config.twilio.endpoint, req.body)) {
-        console.log(req.body);
+        routeMessage(req.body.From, req.body.Body);
         var resp = new twilio.TwimlResponse();
-        resp.message('yes we did!');
         res.writeHead(200, { 'Content-Type':'text/xml' });
         res.end(resp.toString());
     }
@@ -127,10 +126,12 @@ function sendManual(user) {
 }
 
 function subscribeChoice(user, message) {
-    if (userChoice.user && userChoice.user[message])
-        subscribe(user, userChoice.user[message]);
-    else
+    if (userChoice[user] && userChoice[user][message]) {
+        subscribe(user, userChoice[user][message]);
+        delete userChoice[user];
+    } else {
         sendManual(user);
+    }
 }
 
 function subscribe(user, bioguide_id) {
