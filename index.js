@@ -55,12 +55,14 @@ app.post('/sms', function(req, res) {
     if(twilio.validateRequest(config.twilio.auth_token, req.headers['x-twilio-signature'], config.twilio.endpoint, req.body)) {
         var twiml = new twilio.TwimlResponse();
         twiml.message('This HTTP request came from Twilio!');
-        console.log(req);
-        res.send(twiml);
+        console.log(req.body);
+        res.writeHead(200, {
+            'Content-Type':'text/xml'
+        });
+        res.end(twiml);
     }
     else {
-        console.log("nope");
-        console.log(req);
+        res.send('nope');
     }
 
 });
