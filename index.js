@@ -32,8 +32,9 @@ var sunlightLegislator =
         { apikey : sunlightAPIKey });
 
 var usageStr = "TXT your ZIPCODE to see available legislators. TXT STOP anytime to STOP.";
-var legislatorChoiceStr = "TXT Choice number to get notified when a vote happens:";
-var legislatorChoiceOptionStr = "{{n}}. {{name}} ";
+var legislatorChoiceStr = "TXT Choice number to select your legislator:";
+var legislatorChoiceOptionStr = "{{n}}. {{name}}";
+var legislatorChoiceConfirm = "Thanks. You are now subscribed to votes by {{name}}. TXT STOP to STOP.";
 var voteStr = "{{name}} just voted {{vote}} on {{bill}}. REPLY ? to see breakdown. TXT STOP to STOP.";
 var noVoteStr = "{{name}} chose not to vote on {{bill}}. REPLY ? to see breakdown. TXT STOP to STOP.";
 
@@ -42,6 +43,7 @@ var getSubscribersSQL = "SELECT number FROM subscriptions WHERE bioguide_id = :b
 var unsubscribeSQL = "DELETE FROM subscriptions WHERE number = :number";
 
 var nameCache = {}; //cache bid -> name party-state
+var userChoice = {}; //storage for user prompt.
 
 //DEBUG will direct all SMS to go to console.log instead of twilio
 var DEBUG = config.DEBUG;
@@ -71,6 +73,17 @@ function incomingZipCode(user, zipcode) {
         if (!err && resp.statusCode === 200) {
             if (body.results && body.count > 1) {
                 /* need user response on which one to subscribe to */
+                var message = legislatorChoiceStr;
+                userChoice[user] = [];
+                body.results.forEach(function (key, idx) {
+                    message += ' ' + replaceStr(legislatorChoiceOptionStr, {
+                        n : idx,
+                        name : sunlightLegislatorToNamePartyState(key)
+                    });
+                    userChoice[user][idx] = key.bioguide_id;
+                });
+                sendMessage(user, message);
+                console.log(userChoice);
             } else if (body.results.length === 1){
                 /* subscrube to only one */
                 var bioguide_id = body.results[0].bioguide_id;
@@ -101,7 +114,10 @@ function sendManual(user) {
 }
 
 function subscribeChoice(user, message) {
-    subscribe(user, userChoice.user[message]);
+    if (userChoice.user && userChoice.user[message])
+        subscribe(user, userChoice.user[message]);
+    else
+        sendManual(user);
 }
 
 function subscribe(user, bioguide_id) {
@@ -153,35 +169,47 @@ function notify(votes) {
         }
         /* iterate over legislator votes */
         Object.keys(vote.voter_ids).forEach(function(key) {
-            /* craft message for each legislator's vote */
-            var val = vote.voter_ids[key];
-            var message = val == "Not Voting" ? noVoteStr : voteStr;
-            /* convert the legislator ID to Name Party-State */
-            bidToName(key, function(legislator_name) {
-                /* Form full message */
-                message = replaceStr(message, {
-                    name : legislator_name,
-                    vote : val,
-                    bill : bill_name
-                });
-                /* Lookup who is subscribed to this legislator and send them a sms */
-                db.connect();
-                db.query(getSubscribersSQL, {bid : key}, function(err, rows) {
-                    if (!err) {
-                        if (rows.info.numRows > 0) {
+            db.connect();
+            db.query(getSubscribersSQL, {bid : key}, function(err, rows) {
+                if (!err) {
+                    if (rows.info.numRows > 0) {
+                        /* craft message for each legislator's vote */
+                        var val = vote.voter_ids[key];
+                        var message = val == "Not Voting" ? noVoteStr : voteStr;
+
+                        /* convert the legislator ID to Name Party-State */
+                        bidToName(key, function(legislator_name) {
+                            /* Form full message */
+                            message = replaceStr(message, {
+                                name : legislator_name,
+                                vote : val,
+                                bill : bill_name
+                            });
                             console.log("Found", rows.info.numRows, "subscription(s) for", legislator_name);
                             rows.forEach(function (key) {
                                 sendMessage(key.number, message);
                             });
-                        }
+                        });
                     } else {
-                        console.log(err);
                     }
-                });
-                db.close();
+                } else {
+                    console.log(err);
+                }
             });
+            db.close();
+
+
         });
     }
+}
+
+function sunlightLegislatorToNamePartyState(obj) {
+    var firstName = obj.nickname ? obj.nickname : obj.first_name;
+    var lastName = obj.last_name;
+    var name = firstName + ' ' + lastName;
+    var partyState = obj.party+'-'+obj.state;
+    var full = name + ' ' + partyState;
+    return full;
 }
 
 function bidToName(bid, cb) {
@@ -195,11 +223,7 @@ function bidToName(bid, cb) {
     }, function (err, resp, body) {
         if (!err && resp.statusCode === 200) {
             if (body.count > 0) {
-                var firstName = body.results[0].nickname ? body.results[0].nickname : body.results[0].first_name;
-                var lastName = body.results[0].last_name;
-                var name = firstName + ' ' + lastName;
-                var partyState = body.results[0].party+'-'+body.results[0].state;
-                var full = name + ' ' + partyState;
+                var full = sunlightLegislatorToNamePartyState(body.results[0]);
                 nameCache[bid] = full;
                 cb(full);
             }

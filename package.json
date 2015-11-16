@@ -4,7 +4,9 @@
   "description": "a service that sends sms updates of legislator actions",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js",
+    "run": "node run.js"
   },
   "keywords": [
     "legislator"
