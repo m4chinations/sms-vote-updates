@@ -52,7 +52,7 @@ var DEBUG = config.DEBUG;
 var lastVote = moment().subtract(10, 'days');
 
 app.post('/sms', function(req, res) {
-    if(twilio.validateRequest(config.twilio.auth_token, req.headers['x-twilio-signature'], config.twilio.endpoint, req.body) {
+    if(twilio.validateRequest(config.twilio.auth_token, req.headers['x-twilio-signature'], config.twilio.endpoint, req.body)) {
         var twiml = new twilio.TwimlResponse();
         twiml.message('This HTTP request came from Twilio!');
         console.log(req);
