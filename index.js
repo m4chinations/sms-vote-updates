@@ -53,6 +53,7 @@ var lastVote = moment().subtract(10, 'days');
 app.post('/sms', require('twilio').webhook(), function(request, response) {
     var twiml = new twilio.TwimlResponse();
     twiml.message('This HTTP request came from Twilio!');
+    console.log(request);
     response.send(twiml);
 });
 
