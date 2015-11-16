@@ -20,6 +20,6 @@ config.twilio.endpoint = 'https://';
 config.sunlight.api_key = '';
 
 
-config.web.port = process.env.PORT || 3000
+config.web.port = process.env.PORT || 3000;
 
 module.exports = config;

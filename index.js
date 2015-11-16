@@ -32,12 +32,13 @@ var sunlightLegislator =
     replaceStr('https://congress.api.sunlightfoundation.com/legislators?bioguide_id={{bid}}&apikey={{apikey}}',
         { apikey : sunlightAPIKey });
 
-var usageStr = "TXT your ZIPCODE to see available legislators. TXT STOP anytime to STOP.";
+var usageStr = "TXT your ZIPCODE to see available legislators. TXT STOP anytime to STOP. TXT CLEAR to clear subscriptions.";
 var legislatorChoiceStr = "TXT Choice number to select your legislator:";
 var legislatorChoiceOptionStr = "{{n}}. {{name}}";
 var legislatorChoiceConfirm = "Thanks. You are now subscribed to votes by {{name}}. TXT STOP to STOP.";
 var voteStr = "{{name}} just voted {{vote}} on {{bill}}. REPLY ? to see breakdown. TXT STOP to STOP.";
 var noVoteStr = "{{name}} chose not to vote on {{bill}}. REPLY ? to see breakdown. TXT STOP to STOP.";
+var breakdownStr = 'R: {{ry}} YEA {{rn}} NAY {{rnv}} NV D: {{dy}} YEA {{dn}} NAY {{dnv}} NV I: {{iy}} YEA {{in}} NAY {{inv}} NV';
 
 var subscribeUserSQL = "INSERT INTO subscriptions (bioguide_id, number) VALUES (:bid, :number)";
 var getSubscribersSQL = "SELECT number FROM subscriptions WHERE bioguide_id = :bid";
@@ -45,6 +46,7 @@ var unsubscribeSQL = "DELETE FROM subscriptions WHERE number = :number";
 
 var nameCache = {}; //cache bid -> name party-state
 var userChoice = {}; //storage for user prompt.
+var userBreakdown = {};
 
 //DEBUG will direct all SMS to go to console.log instead of twilio
 var DEBUG = config.DEBUG;
@@ -89,7 +91,7 @@ function incomingZipCode(user, zipcode) {
                 userChoice[user] = [];
                 body.results.forEach(function (key, idx) {
                     message += ' ' + replaceStr(legislatorChoiceOptionStr, {
-                        n : idx,
+                        n : idx + 1,
                         name : sunlightLegislatorToNamePartyState(key)
                     });
                     userChoice[user][idx] = key.bioguide_id;
@@ -114,10 +116,19 @@ function routeMessage(user, message) {
     } else if (/^\d{1}$/.test(message)) { /* legislator selection */
         console.log("Recieved legislator choice from", user, message);
         subscribeChoice(user, message);
-    } else if (/STOP/i.test(message)) { /* stop message */
+    } else if (/^CLEAR$/i.test(message)) { /* stop message */
         unsubscribe(user);
+    } else if (/^\?$/.test(message)) {
+        breakdown(user);
     } else {
         sendManual(user);
+    }
+}
+
+function breakdown(user) {
+    if (userBreakdown[user]) {
+        sendMessage(user, userBreakdown[user]);
+        delete userBreakdown[user];
     }
 }
 
@@ -126,8 +137,8 @@ function sendManual(user) {
 }
 
 function subscribeChoice(user, message) {
-    if (userChoice[user] && userChoice[user][message]) {
-        subscribe(user, userChoice[user][message]);
+    if (userChoice[user] && userChoice[user][message - 1]) {
+        subscribe(user, userChoice[user][message - 1]);
         delete userChoice[user];
     } else {
         sendManual(user);
@@ -141,6 +152,9 @@ function subscribe(user, bioguide_id) {
             console.log(err);
     });
     db.end();
+    bidToName(bioguide_id, function(name) {
+        sendMessage(user, replaceStr(legislatorChoiceConfirm, { name : name }));
+    });
 }
 
 function unsubscribe(user) {
@@ -181,6 +195,17 @@ function notify(votes) {
         } else {
             bill_name = vote.bill.official_title;
         }
+        var breakdownMessage = replaceStr(breakdownStr, {
+            ry : vote.breakdown.party.R.Yea,
+            rn : vote.breakdown.party.R.Nay,
+            rnv : vote.breakdown.party.R['Not Voting'],
+            dy : vote.breakdown.party.D.Yea,
+            dn : vote.breakdown.party.D.Nay,
+            dnv : vote.breakdown.party.D['Not Voting'],
+            iy : vote.breakdown.party.I.Yea,
+            in : vote.breakdown.party.I.Nay,
+            inv : vote.breakdown.party.I['Not Voting'],
+        });
         /* iterate over legislator votes */
         Object.keys(vote.voter_ids).forEach(function(key) {
             db.connect();
@@ -202,6 +227,7 @@ function notify(votes) {
                             console.log("Found", rows.info.numRows, "subscription(s) for", legislator_name);
                             rows.forEach(function (key) {
                                 sendMessage(key.number, message);
+                                userBreakdown[key.number] = breakdownMessage;
                             });
                         });
                     } else {
@@ -252,14 +278,13 @@ function sendMessage(number, body) {
         console.log("SEND:", body, number);
         return;
     }
-
     sms.sendMessage({
         to: number,
         from: myNumber,
         body: body
     }, function(err, resp) {
         if (!err) {
-            /* no error */
+            console.log("SENT:", body, number);
         } else {
             console.log(err);
         }
