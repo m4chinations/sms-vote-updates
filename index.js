@@ -56,10 +56,7 @@ app.post('/sms', function(req, res) {
         var twiml = new twilio.TwimlResponse();
         twiml.message('This HTTP request came from Twilio!');
         console.log(req.body);
-        res.writeHead(200, {
-            'Content-Type':'text/xml'
-        });
-        res.end(twiml);
+        res.send(twiml);
     }
     else {
         res.send('nope');
