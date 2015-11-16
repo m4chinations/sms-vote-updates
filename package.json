@@ -12,6 +12,11 @@
   "author": "Tennyson Holloway",
   "license": "MIT",
   "dependencies": {
+    "body-parser": "^1.14.1",
+    "express": "^4.13.3",
+    "mariasql": "^0.2.5",
+    "moment": "^2.10.6",
+    "request": "^2.65.0",
     "twilio": "^2.5.2"
   }
 }
