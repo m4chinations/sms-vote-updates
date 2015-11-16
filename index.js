@@ -55,7 +55,7 @@ app.post('/sms', function(req, res) {
     if(twilio.validateRequest(config.twilio.auth_token, req.headers['x-twilio-signature'], config.twilio.endpoint, req.body)) {
         console.log(req.body);
         var resp = new twilio.TwimlResponse();
-        resp.say('hello, twilio!');
+        resp.message('yes we did!');
         res.writeHead(200, { 'Content-Type':'text/xml' });
         res.end(resp.toString());
     }
