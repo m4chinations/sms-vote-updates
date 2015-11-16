@@ -38,7 +38,8 @@ var legislatorChoiceOptionStr = "{{n}}. {{name}}";
 var legislatorChoiceConfirm = "Thanks. You are now subscribed to votes by {{name}}. TXT STOP to STOP.";
 var voteStr = "{{name}} just voted {{vote}} on {{bill}}. REPLY ? to see breakdown. TXT STOP to STOP.";
 var noVoteStr = "{{name}} chose not to vote on {{bill}}. REPLY ? to see breakdown. TXT STOP to STOP.";
-var breakdownStr = 'R: {{ry}} YEA {{rn}} NAY {{rnv}} NV D: {{dy}} YEA {{dn}} NAY {{dnv}} NV I: {{iy}} YEA {{in}} NAY {{inv}} NV';
+var breakdownStr = 'R: YEA {{ry}} NAY {{rn}} NV {{rnv}} D: YEA {{dy}} NAY {{dn}} NV {{dnv}} I: YEA {{iy}} NAY {{in}} NV {{inv}}';
+var unsubscribeStr = 'You have cleared your subscriptions.';
 
 var subscribeUserSQL = "INSERT INTO subscriptions (bioguide_id, number) VALUES (:bid, :number)";
 var getSubscribersSQL = "SELECT number FROM subscriptions WHERE bioguide_id = :bid";
@@ -116,7 +117,7 @@ function routeMessage(user, message) {
     } else if (/^\d{1}$/.test(message)) { /* legislator selection */
         console.log("Recieved legislator choice from", user, message);
         subscribeChoice(user, message);
-    } else if (/^CLEAR$/i.test(message)) { /* stop message */
+    } else if (/CLEAR/i.test(message)) { /* stop message */
         unsubscribe(user);
     } else if (/^\?$/.test(message)) {
         breakdown(user);
@@ -164,6 +165,7 @@ function unsubscribe(user) {
             console.log(err);
     });
     db.close();
+    sendMessage(user, unsubscribeStr);
 }
 
 function checkForNewVotes(body) {
