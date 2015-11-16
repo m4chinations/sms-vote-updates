@@ -23,7 +23,7 @@ var db = new maria({
 var sunlightAPIKey = config.sunlight.api_key;
 
 var sunlightBill =
-    replaceStr('https://congress.api.sunlightfoundation.com/votes?vote_type__in=passage&fields=vote_type,roll_id,bill,voted_at,voter_ids,roll_id,result,breakdown.total&order=voted_at&apikey={{apikey}}',
+    replaceStr('https://congress.api.sunlightfoundation.com/votes?vote_type__in=passage&fields=vote_type,roll_id,bill,voted_at,voter_ids,roll_id,result,breakdown.party&order=voted_at&apikey={{apikey}}',
         { apikey : sunlightAPIKey });
 var sunlightLegislatorLookup =
     replaceStr('https://congress.api.sunlightfoundation.com/legislators/locate?zip={{zip}}&apikey={{apikey}}',
