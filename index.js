@@ -6,7 +6,7 @@ var twilio     = require('twilio'),
     bodyParser = require('body-parser'),
     config     = require('./config');
 
-var twilio = twilio(config.twilio.account_sid, config.twilio.auth_token);
+var sms = twilio(config.twilio.account_sid, config.twilio.auth_token);
 var myNumber = config.twilio.number;
 
 var app = express();
@@ -51,7 +51,7 @@ var DEBUG = config.DEBUG;
 var lastVote = moment().subtract(10, 'days');
 
 app.post('/sms', function(req, res) {
-    if (require('twilio').validateExpressRequest(req, config.twilio.auth_token)) {
+    if (twilio.validateExpressRequest(req, config.twilio.auth_token)) {
         var twiml = new twilio.TwimlResponse();
         twiml.message('This HTTP request came from Twilio!');
         console.log(req);
@@ -251,7 +251,7 @@ function sendMessage(number, body) {
         return;
     }
 
-    twilio.sendMessage({
+    sms.sendMessage({
         to: number,
         from: myNumber,
         body: body
