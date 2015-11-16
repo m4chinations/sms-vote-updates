@@ -37,6 +37,6 @@ Text STOP, STOPALL, UNSUBSCRIBE, CANCEL, END, and QUIT to STOP at anytime. Text 
 
 
 ## How does it work? How can I run it myself?
-This works thanks to the hard work of the [Sunlight Foundation](http://sunlightfoundation.com/) and their [Congress API](https://sunlightlabs.github.io/congress/). SMS serviced by [Twilio](https://www.twilio.com/). 
+Made possible thanks to the hard work of the [Sunlight Foundation](http://sunlightfoundation.com/) and their [Congress API](https://sunlightlabs.github.io/congress/). SMS serviced by [Twilio](https://www.twilio.com/). 
 
 To run yourself, copy config-sample.js into config.js and fill out the configurations. You'll need a mariadb up and running, twilio creds, and a sunlight api key. 
