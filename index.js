@@ -57,6 +57,11 @@ app.post('/sms', function(req, res) {
         console.log(req);
         res.send(twiml);
     }
+    else {
+        console.log("nope");
+        console.log(req);
+    }
+
 });
 
 app.get('*', function (req, res) {
