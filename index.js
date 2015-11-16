@@ -10,6 +10,7 @@ var sms = twilio(config.twilio.account_sid, config.twilio.auth_token);
 var myNumber = config.twilio.number;
 
 var app = express();
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:true}));
 
 var db = new maria({
@@ -51,6 +52,8 @@ var DEBUG = config.DEBUG;
 var lastVote = moment().subtract(10, 'days');
 
 app.post('/sms', function(req, res) {
+    console.log(config.twilio.auth_token);
+    console.log(twilio.validateRequest(config.twilio.auth_token, req.headers['x-twilio-signature'], 'https://congress-sms-updates.herokuapp.com/sms', req.body));
     if (twilio.validateExpressRequest(req, config.twilio.auth_token)) {
         var twiml = new twilio.TwimlResponse();
         twiml.message('This HTTP request came from Twilio!');
