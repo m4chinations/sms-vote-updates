@@ -269,6 +269,6 @@ setInterval(function() {
             checkForNewVotes(body);
         }
     });
-}, 10000);
+}, 60000);
 
 app.listen(config.web.port);
