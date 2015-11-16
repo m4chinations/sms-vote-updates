@@ -50,11 +50,13 @@ var DEBUG = config.DEBUG;
 
 var lastVote = moment().subtract(10, 'days');
 
-app.post('/sms', require('twilio').webhook(), function(request, response) {
-    var twiml = new twilio.TwimlResponse();
-    twiml.message('This HTTP request came from Twilio!');
-    console.log(request);
-    response.send(twiml);
+app.post('/sms', function(req, res) {
+    if (twilio.validateExpressRequest(req, config.twilio.auth_token)) {
+        var twiml = new twilio.TwimlResponse();
+        twiml.message('This HTTP request came from Twilio!');
+        console.log(req);
+        res.send(twiml);
+    }
 });
 
 app.get('*', function (req, res) {
