@@ -56,6 +56,10 @@ app.post('/sms', require('twilio').webhook(), function(request, response) {
     response.send(twiml);
 });
 
+app.get('*', function (req, res) {
+    res.send('Hello World');
+});
+
 function replaceStr(str, data) {
     Object.keys(data).forEach(function (key) {
         var val = data[key];
