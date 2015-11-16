@@ -51,7 +51,7 @@ var DEBUG = config.DEBUG;
 var lastVote = moment().subtract(10, 'days');
 
 app.post('/sms', function(req, res) {
-    if (twilio.validateExpressRequest(req, config.twilio.auth_token)) {
+    if (require('twilio').validateExpressRequest(req, config.twilio.auth_token)) {
         var twiml = new twilio.TwimlResponse();
         twiml.message('This HTTP request came from Twilio!');
         console.log(req);
