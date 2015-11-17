@@ -59,7 +59,7 @@ var userBreakdown = {}; //storage for user breakdown reply
 var DEBUG = config.DEBUG;
 
 /* by default, set the lastVote to when the app is started */
-var lastVote = moment();
+var lastVote = moment().subtract(1, 'day');
 
 /* express handler for incoming SMS post from twilio */
 app.post(config.web.endpoint, function(req, res) {
@@ -226,9 +226,9 @@ function notify(votes) {
             dy : vote.breakdown.party.D.Yea,
             dn : vote.breakdown.party.D.Nay,
             dnv : vote.breakdown.party.D['Not Voting'],
-            iy : vote.breakdown.party.I.Yea,
-            in : vote.breakdown.party.I.Nay,
-            inv : vote.breakdown.party.I['Not Voting'],
+            iy : (vote.breakdown.party.I && vote.breakdown.party.I.Yea) ? vote.breakdown.party.I.Yea : 0,
+            in : (vote.breakdown.party.I && vote.breakdown.party.I.Nay) ? vote.breakdown.party.I.Nay : 0,
+            inv : (vote.breakdown.party.I && vote.breakdown.party.I['Not Voting']) ? vote.breakdown.party.I['Not Voting'] : 0,
         });
         /* iterate over legislator votes */
         Object.keys(vote.voter_ids).forEach(function(key) {
