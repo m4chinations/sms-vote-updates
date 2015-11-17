@@ -232,12 +232,14 @@ function notify(votes) {
         });
         /* iterate over legislator votes */
         Object.keys(vote.voter_ids).forEach(function(key) {
+            console.log("DB Lookup for", key);
             db.connect();
             /* query the DB to get subscribers to that legislator */
             db.query(getSubscribersSQL, {bid : key}, function(err, rows) {
                 if (!err) {
                     if (rows.info.numRows > 0) { //if someone is subscribed
                         /* craft message for each legislator's vote */
+                        console.log("Found subscription for", key, "number", rows.info.numRows, row);
                         var val = vote.voter_ids[key];
                         var message = val == "Not Voting" ? noVoteStr : voteStr;
 
@@ -252,6 +254,7 @@ function notify(votes) {
                             console.log("Found", rows.info.numRows, "subscription(s) for", legislator_name);
                             /* send message to each user subscribed to that legislator */
                             rows.forEach(function (key) {
+                                console.log("in rows for each", key);
                                 sendMessage(key.number, message);
                                 /* store the breakdown so we can send it if prompted for */
                                 userBreakdown[key.number] = breakdownMessage;
