@@ -206,6 +206,44 @@ function checkForNewVotes(body) {
     }
 }
 
+function findSubscriptions(bill_name, breakdownMessage, vote) {
+    Object.keys(vote.voter_ids).forEach(function(key) {
+        db.connect();
+        /* query the DB to get subscribers to that legislator */
+        db.query(getSubscribersSQL, {bid : key}, function(err, rows) {
+            if (!err) {
+                if (rows.info.numRows > 0) { //if someone is subscribed
+                    /* craft message for each legislator's vote */
+                    var val = vote.voter_ids[key];
+                    var message = val == "Not Voting" ? noVoteStr : voteStr;
+
+                    /* convert the legislator b-ID to Name Party-State */
+                    bidToName(key, function(legislator_name) {
+                        /* Form full message */
+                        message = replaceStr(message, {
+                            name : legislator_name,
+                            vote : val,
+                            bill : bill_name
+                        });
+                        console.log("Found", rows.info.numRows, "subscription(s) for", legislator_name);
+                        /* send message to each user subscribed to that legislator */
+                        rows.forEach(function (key) {
+                            sendMessage(key.number, message);
+                            /* store the breakdown so we can send it if prompted for */
+                            userBreakdown[key.number] = breakdownMessage;
+                        });
+                    });
+                } else {
+                }
+            } else {
+                console.log(err);
+            }
+        });
+        db.close(); /* close the db connection */
+    });
+}
+
+
 /* take in a vote object from sunlight and notify the subscribers of the results */
 function notify(votes) {
     for (var i = 0; i < votes.length; i++) { /* for each new vote recieved */
@@ -232,40 +270,7 @@ function notify(votes) {
             inv : (vote.breakdown.party.I && vote.breakdown.party.I['Not Voting']) ? vote.breakdown.party.I['Not Voting'] : 0,
         });
         /* iterate over legislator votes */
-        Object.keys(vote.voter_ids).forEach(function(key) {
-            db.connect();
-            /* query the DB to get subscribers to that legislator */
-            db.query(getSubscribersSQL, {bid : key}, function(err, rows) {
-                if (!err) {
-                    if (rows.info.numRows > 0) { //if someone is subscribed
-                        /* craft message for each legislator's vote */
-                        var val = vote.voter_ids[key];
-                        var message = val == "Not Voting" ? noVoteStr : voteStr;
-
-                        /* convert the legislator b-ID to Name Party-State */
-                        bidToName(key, function(legislator_name) {
-                            /* Form full message */
-                            message = replaceStr(message, {
-                                name : legislator_name,
-                                vote : val,
-                                bill : bill_name
-                            });
-                            console.log("Found", rows.info.numRows, "subscription(s) for", legislator_name);
-                            /* send message to each user subscribed to that legislator */
-                            rows.forEach(function (key) {
-                                sendMessage(key.number, message);
-                                /* store the breakdown so we can send it if prompted for */
-                                userBreakdown[key.number] = breakdownMessage;
-                            });
-                        });
-                    } else {
-                    }
-                } else {
-                    console.log(err);
-                }
-            });
-            db.close(); /* close the db connection */
-        });
+        findSubscriptions(bill_name, breakdownMessage, vote);
     }
 }
 /* takes a sunlight legislator object and converts to the form
